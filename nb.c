@@ -2,6 +2,7 @@
 #include <math.h>
 #include <string.h>
 #include <stdlib.h>
+#include "nbstructs.h"
 
 #define trainingsize 80 /* 80% of data used for training accuracy */
 #define datacount 20   /* 20% of data used for testing accuracy */
