@@ -4,23 +4,47 @@
 #include <stdlib.h>
 #include "nbstructs.h"
 
-#define trainingsize 80 /* 80% of data used for training accuracy */
-#define datacount 20    /* 20% of data used for testing accuracy */
-#define featuresize 9
+#define TRAININGSIZE 80 /* 80% of data used for training accuracy */
+#define DATACOUNT 20    /* 20% of data used for testing accuracy */
+#define FEATURESIZE 9
 #define PI 3.142
 
-void scanArray(features arraySet[], int arrSize);
+//void scanArray(features arraySet[], int arrSize);
+void scanArray(features arr[], int arrSize);
 double mean(double arr[], int n);
 double variance(double arr[], int n);
 
 int main()
 {
-    features traininginput[trainingsize - 1];
-    features testinput[datacount - 1];
-    scanArray(traininginput, trainingsize - 1);
-    scanArray(testinput, datacount - 1);
+    features traininginput[TRAININGSIZE - 1];
+    //features testinput[DATACOUNT - 1];
+    scanArray(traininginput, TRAININGSIZE - 1);
+    //scanArray(testinput, DATACOUNT - 1);
     return 0;
 }
+
+void scanArray(features arr[], int arrSize)
+{
+    FILE *fileptr;
+    fileptr = fopen("fertility_Diagnosis_Data_Group1_4.txt", "r");
+
+    if (fileptr == NULL)
+    {
+        printf("File could not be opened. \n");
+        exit(1);
+    }
+
+    int i = 0; // used to loop through the struct, features
+    while (EOF != fscanf(fileptr, "%f, %f, %d, %d, %d, %d, %f, %d, %f, %d", &arr[i].season, &arr[i].age, &arr[i].disease, &arr[i].accident, &arr[i].surgery, &arr[i].fever, &arr[i].alcohol, &arr[i].smoker, &arr[i].sittinghours, &arr[i].semendiagnosis))
+    {
+        printf("%f, %f, %d, %d, %d, %d, %f, %d, %f, %d\n", arr[i].season, arr[i].age, arr[i].disease, arr[i].accident, arr[i].surgery, arr[i].fever, arr[i].alcohol, arr[i].smoker, arr[i].sittinghours, arr[i].semendiagnosis);
+        i++;
+    }
+}
+
+
+
+/*
 void scanArray(features arr_feature[], int arrSize)
 {
     int i, ii, count;
@@ -36,16 +60,16 @@ void scanArray(features arr_feature[], int arrSize)
     int smoker;             // Smoking Habit: -1 for never, 0 for occassional, 1 for daily
     double sittinghours;    // Hours spent sitting down per day: 0 to 1 (0 for 0 hours, 1 for 24 hours?)
     char semendiagnosis;    // Semen Diagnosis: 0 for Normal, 1 for Altered
-    if (arrSize == trainingsize - 1)
+    if (arrSize == TRAININGSIZE - 1)
     {
         if (file_ptr == NULL)
         {
             printf("File could not be opened \n");
             exit(1);
         }
-        for (i = 0; i <= trainingsize - 1; i++)
+        for (i = 0; i <= TRAININGSIZE - 1; i++)
         {
-            /* scanning the wrong numbers, could be the ascii*/
+            // scanning the wrong numbers, could be the ascii
             fscanf(file_ptr, "%f, %f, %f ,%f, %f, %f, %f, %f, %f, %c", &season, &age, &disease, &accident, &surgery, &fever, &alcohol, &smoker, &sittinghours, &semendiagnosis);
             arr_feature[i].season = season;
             arr_feature[i].age = age;
@@ -57,7 +81,7 @@ void scanArray(features arr_feature[], int arrSize)
             arr_feature[i].smoker = smoker;
             arr_feature[i].sittinghours = sittinghours;
             arr_feature[i].semendiagnosis = semendiagnosis;
-            printf("\n%f, %d, %c ,%c, %c, %d, %f, %d, %lf, %c", arr_feature[i].season, arr_feature[i].age, arr_feature[i].disease, arr_feature[i].accident, arr_feature[i].surgery, arr_feature[i].fever, arr_feature[i].alcohol, arr_feature[i].smoker, arr_feature[i].sittinghours, arr_feature[i].semendiagnosis);
+            printf("\n%f, %d, %i ,%i, %i, %d, %f, %d, %lf, %i", arr_feature[i].season, arr_feature[i].age, arr_feature[i].disease, arr_feature[i].accident, arr_feature[i].surgery, arr_feature[i].fever, arr_feature[i].alcohol, arr_feature[i].smoker, arr_feature[i].sittinghours, arr_feature[i].semendiagnosis);
         }
         fclose(file_ptr);
     }
@@ -65,7 +89,7 @@ void scanArray(features arr_feature[], int arrSize)
     {
     }
 }
-
+*/
 double mean(double arr[], int n) //needs to run and check output
 {
     double sum = 0; // sum of all elements
