@@ -7,12 +7,15 @@
 #define TRAININGSIZE 80 /* 80% of data used for training accuracy */
 #define DATACOUNT 20    /* 20% of data used for testing accuracy */
 #define FEATURESIZE 9
-#define PI 3.142
+#define PI 3.14159
 
 void scanArray(features arr[]);
 double mean(double arr[], int n);
 double variance(double arr[], int n);
 features traininginput[TRAININGSIZE], testinput[DATACOUNT];
+
+// Feature Variables
+int normal_diagnosis, altered_diagnosis;
 
 int main()
 {
@@ -25,6 +28,26 @@ int main()
     memcpy(testinput,&input[80], DATACOUNT * sizeof(features));
     // free temporary table from heap 
     free(input);
+
+    // Calculating Prior Probability
+    for (int i = 0; i < TRAININGSIZE; i++)
+    {
+        if (traininginput[i].semendiagnosis == 1)
+        {
+            altered_diagnosis++;
+        }
+        else if (traininginput[i].semendiagnosis == 0)
+        {
+            normal_diagnosis++;
+        }
+        else
+        {
+            printf("Error - unable to calculate Prior Probability\n");
+            exit(1);
+        }
+    }
+
+    printf("Normal: %i, Altered: %i \n", normal_diagnosis, altered_diagnosis); // Checked output and figure tallys.
     return 0;
 }
 

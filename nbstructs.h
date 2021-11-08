@@ -11,3 +11,11 @@ typedef struct features
     float sittinghours; // Hours spent sitting down per day: 0 to 1 (0 for 0 hours, 1 for 24 hours?) 
     char semendiagnosis; // Semen Diagnosis: 0 for Normal, 1 for Altered
 } features;
+
+// Still thinking of how best to store the conditional probablities for each condition
+typedef struct cond_prob
+{
+    int index;
+    float normal_prob;
+    float altered_prob;
+} cond_prob;
