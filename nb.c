@@ -20,7 +20,7 @@ int normal_diagnosis, altered_diagnosis;
 int main()
 {
     // create a temporary table in heap
-    features *input = malloc(sizeof(features) * TRAININGSIZE + DATACOUNT);
+    features *input = malloc(sizeof(features) * (TRAININGSIZE + DATACOUNT));
     // store entire data into the input
     scanArray(input);
     // split first 80% of data into traininginput and remaining 20% into testinput
@@ -48,6 +48,44 @@ int main()
     }
 
     printf("Normal: %i, Altered: %i \n", normal_diagnosis, altered_diagnosis); // Checked output and figure tallys.
+
+    // Calculating Conditional Probability for Seasons of Analysis
+    cond_prob season_prob[4] = {0, 0, 0}; 
+    // Winter: -1, Spring: -0.33, Summer: 0.33, Fall: 1
+    // Index : 0, 1, 2, 3
+
+    for (int i = 0; i < TRAININGSIZE; i++)
+    {
+        float season = traininginput[i].season;
+
+        if (season == (float)-1)
+        {
+            season_prob[0].count++;
+        }
+        else if (season == (float)-0.33)
+        {
+            season_prob[1].count++;
+        }
+        else if (season == (float)0.33)
+        {
+            season_prob[2].count++;
+        }
+        else if (season == (float)1)
+        {
+            season_prob[3].count++;
+        }
+        else
+        {
+            printf("Error - unable to calculate Conditional Probability\n");
+            exit(1);
+        }
+    }
+
+    for (int i = 0; i < 4; i++)
+    {
+        printf("index: %d, count: %d\n", i, season_prob[i].count);
+    }
+    
     return 0;
 }
 
@@ -65,6 +103,7 @@ void scanArray(features arr[])
     int i = 0; // used to loop through the struct, features
     while (EOF != fscanf(fileptr, "%f, %f, %d, %d, %d, %d, %f, %d, %f, %d", &arr[i].season, &arr[i].age, &arr[i].disease, &arr[i].accident, &arr[i].surgery, &arr[i].fever, &arr[i].alcohol, &arr[i].smoker, &arr[i].sittinghours, &arr[i].semendiagnosis))
     {
+        arr[i].season = roundf(arr[i].season * 100) / 100;
         printf("%f, %f, %d, %d, %d, %d, %f, %d, %f, %d\n", arr[i].season, arr[i].age, arr[i].disease, arr[i].accident, arr[i].surgery, arr[i].fever, arr[i].alcohol, arr[i].smoker, arr[i].sittinghours, arr[i].semendiagnosis);
         i++;
     }
