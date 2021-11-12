@@ -15,7 +15,8 @@ typedef struct features
 // Still thinking of how best to store the conditional probablities for each condition
 typedef struct cond_prob
 {
-    int count;
+    int normal_count;
+    int altered_count;
     float normal_prob;
     float altered_prob;
 } cond_prob;

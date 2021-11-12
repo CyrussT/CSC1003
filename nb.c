@@ -12,6 +12,7 @@
 void scanArray(features arr[]);
 double mean(double arr[], int n);
 double variance(double arr[], int n);
+void calculateProbability(cond_prob input[], int index_size);
 features traininginput[TRAININGSIZE], testinput[DATACOUNT];
 
 // Feature Variables
@@ -57,36 +58,78 @@ int main()
     for (int i = 0; i < TRAININGSIZE; i++)
     {
         float season = traininginput[i].season;
+        int semendiagnosis = traininginput[i].semendiagnosis;
 
-        if (season == (float)-1)
+        switch (semendiagnosis)
         {
-            season_prob[0].count++;
-        }
-        else if (season == (float)-0.33)
-        {
-            season_prob[1].count++;
-        }
-        else if (season == (float)0.33)
-        {
-            season_prob[2].count++;
-        }
-        else if (season == (float)1)
-        {
-            season_prob[3].count++;
-        }
-        else
-        {
-            printf("Error - unable to calculate Conditional Probability\n");
-            exit(1);
+            case (0):
+                if (season == (float)-1)
+                {
+                    season_prob[0].normal_count++;
+                }
+                else if (season == (float)-0.33)
+                {
+                    season_prob[1].normal_count++;
+                }
+                else if (season == (float)0.33)
+                {
+                    season_prob[2].normal_count++;
+                }
+                else if (season == (float)1)
+                {
+                    season_prob[3].normal_count++;
+                }
+                else
+                {
+                    printf("Error - unable to calculate Conditional Probability\n");
+                    exit(1);
+                }
+                break;
+            case (1):
+                if (season == (float)-1)
+                {
+                    season_prob[0].altered_count++;
+                }
+                else if (season == (float)-0.33)
+                {
+                    season_prob[1].altered_count++;
+                }
+                else if (season == (float)0.33)
+                {
+                    season_prob[2].altered_count++;
+                }
+                else if (season == (float)1)
+                {
+                    season_prob[3].altered_count++;
+                }
+                else
+                {
+                    printf("Error - unable to calculate Conditional Probability\n");
+                    exit(1);
+                }
+                break;
         }
     }
 
-    for (int i = 0; i < 4; i++)
-    {
-        printf("index: %d, count: %d\n", i, season_prob[i].count);
-    }
-    
+    // Calculating Conditional Probability for Season of Analysis
+    calculateProbability(season_prob, 4);
     return 0;
+}
+
+void calculateProbability(cond_prob input[], int index_size)
+{
+    /*
+    Calculates the Conditional Probability
+    Input: struct cond_prob and number of distinct values representing the features
+    Output: Populating the normal and altered probability for each cond_prob struct.
+    */
+   
+    for (int i = 0; i < index_size; i++)
+    {
+        input[i].normal_prob = (float)input[i].normal_count / (float)normal_diagnosis;
+        input[i].altered_prob = (float)input[i].altered_count / (float)altered_diagnosis;
+        printf("Index %i, Normal count %i, Normal Probablity: %f, Altered Count %i, Altered Probability: %f\n", i, input[i].normal_count, input[i].normal_prob, input[i].altered_count, input[i].altered_prob);
+    }
 }
 
 void scanArray(features arr[])
