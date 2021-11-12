@@ -12,7 +12,7 @@ typedef struct features
     char semendiagnosis; // Semen Diagnosis: 0 for Normal, 1 for Altered
 } features;
 
-// Still thinking of how best to store the conditional probablities for each condition
+// To update explanation of each var:
 typedef struct cond_prob
 {
     int normal_count;
@@ -20,3 +20,12 @@ typedef struct cond_prob
     float normal_prob;
     float altered_prob;
 } cond_prob;
+
+// Explain usage of this struct
+typedef struct cond_prob_range
+{
+    float normal_mean; // mean for normal diagnosis
+    float normal_variance; // variance for normal diagnosis
+    float altered_mean; // mean for altered diagnosis
+    float altered_variance; // variance for normal diagnosis
+} cond_prob_range;
