@@ -19,6 +19,9 @@ void sumFeatures(int num, int result, int index, int value_size, int values[], i
 void calculateFeature2(features arr[], cond_prob_range input[], int arr_size);
 void calculateFeature9(features arr[], cond_prob_range input[], int arr_size);
 void calculateProbability(cond_prob input[], int index_size, int indexNumber, int probabilitySum[NUMOFOUTCOMES][FEATURESIZE][MAXINDEXSIZE]);
+float gaussian(float x, float mean, float variance);
+void predict(features test[], int arr_size, predicted_prob prediction[], cond_prob season[], cond_prob_range age[], cond_prob disease[], cond_prob accident[], cond_prob surger[], cond_prob fever[], cond_prob alcohol[], cond_prob smoking[], cond_prob_range sitting[]);
+int calculateError(predicted_prob prediction[], int arr_size);
 features traininginput[TRAININGSIZE], testinput[DATACOUNT];
 
 // Feature Variables
@@ -76,10 +79,10 @@ int main()
     //Calculating Probability for normal values, by looping each individual line
     loopArr(traininginput, TRAININGSIZE, probabilitySum);
     //Calculating mean and variance for feature 2 and 9
-    cond_prob_range age_prob[] = {0, 0, 0, 0};
-    cond_prob_range sitting_prob[] = {0, 0, 0, 0};
-    calculateFeature2(traininginput, age_prob, TRAININGSIZE);
-    calculateFeature9(traininginput, sitting_prob, TRAININGSIZE);
+    cond_prob_range age[] = {0, 0, 0, 0};
+    cond_prob_range sitting[] = {0, 0, 0, 0};
+    calculateFeature2(traininginput, age, TRAININGSIZE);
+    calculateFeature9(traininginput, sitting, TRAININGSIZE);
     // Populating probability 
     cond_prob season[4]; //Season
     calculateProbability(season, 4, 0, probabilitySum);
@@ -100,15 +103,22 @@ int main()
     printf("Overall Probability\n");
     printf("=====================\n");
     printf("Season 0: %f, %f, Season 1: %f, %f, Season 2: %f, %f, Season 3: %f, %f\n", season[0].normal_prob, season[0].altered_prob, season[1].normal_prob, season[1].altered_prob, season[2].normal_prob, season[2].altered_prob, season[3].normal_prob, season[3].altered_prob);
-    printf("Normal age mean: %f, variance: %f, Altered age mean: %f, variance: %f\n", age_prob->normal_mean, age_prob->normal_variance, age_prob->altered_mean, age_prob->altered_variance);    
+    printf("Normal age mean: %f, variance: %f, Altered age mean: %f, variance: %f\n", age->normal_mean, age->normal_variance, age->altered_mean, age->altered_variance);    
     printf("Disease 0: %f, %f, Disease 1: %f, %f\n", disease[0].normal_prob, disease[0].altered_prob, disease[1].normal_prob, disease[1].altered_prob);
     printf("Accident 0: %f, %f, Accident 1: %f, %f\n", accident[0].normal_prob, accident[0].altered_prob, accident[1].normal_prob, accident[1].altered_prob);
     printf("Surgery 0: %f, %f, Surgery 1: %f, %f\n", surgery[0].normal_prob, surgery[0].altered_prob, surgery[1].normal_prob, surgery[1].altered_prob);
     printf("Fever 0: %f, %f, Fever 1: %f, %f, Fever 2: %f, %f\n", fever[0].normal_prob, fever[0].altered_prob, fever[1].normal_prob, fever[1].altered_prob, fever[2].normal_prob, fever[2].altered_prob);
     printf("Alcohol 0: %f, %f, Alcohol 1: %f, %f, Alcohol 2: %f, %f, Alcohol 3: %f, %f, Alcohol 4: %f, %f\n", alcohol[0].normal_prob, alcohol[0].altered_prob, alcohol[1].normal_prob, alcohol[1].altered_prob, alcohol[2].normal_prob, alcohol[2].altered_prob, alcohol[3].normal_prob, alcohol[3].altered_prob, alcohol[4].normal_prob, alcohol[4].altered_prob);
     printf("Smoking 0: %f, %f, Smoking 1: %f, %f, Smoking 2: %f, %f\n", smoking[0].normal_prob, smoking[0].altered_prob, smoking[1].normal_prob, smoking[1].altered_prob, smoking[2].normal_prob, smoking[2].altered_prob);
-    printf("Hours sitting normal mean: %f, variance: %f, Hours sitting altered mean: %f, variance: %f\n", sitting_prob->normal_mean, sitting_prob->normal_variance, sitting_prob->altered_mean, sitting_prob->altered_variance);
-    return 0;
+    printf("Hours sitting normal mean: %f, variance: %f, Hours sitting altered mean: %f, variance: %f\n", sitting->normal_mean, sitting->normal_variance, sitting->altered_mean, sitting->altered_variance);
+   
+   //Testing Phase
+   predicted_prob prediction[DATACOUNT];
+   predict(testinput, DATACOUNT, prediction, season, age, disease, accident, surgery, fever, alcohol, smoking, sitting);
+   int errors = calculateError(prediction, DATACOUNT);
+   float accuracy = (float)1 - ((float) errors / (float) DATACOUNT);
+   printf("Total Errors: %i out of %i at %f accuracy!\n", errors, DATACOUNT, accuracy);
+   return 0;
 }
 
 void scanArray(features arr[])
@@ -179,6 +189,7 @@ void sumFloatFeatures(float num, int result, int index, int value_size, float va
         if (num == values[i])
         {
             probabilitySum[result][index][i]++;
+            break;
         }
     }
 }
@@ -191,6 +202,7 @@ void sumFeatures(int num, int result, int index, int value_size, int values[], i
         if(num == values[i])
         {
             probabilitySum[result][index][i]++;
+            break;
         }
     }
 }
@@ -302,7 +314,127 @@ void calculateProbability(cond_prob input[], int index_size, int indexNumber, in
    }
 }
 
-double gaussian(double x, double mean, double variance) //placeholder
+float gaussian(float x, float mean, float variance)
 {
-    return (1 / (sqrt(2 * PI * variance))) * exp(-0.5 * pow(x - mean, 2) / (2 * variance));
+    return (1 / (sqrt(2 * PI))) *exp(-0.5 * pow((x - mean),2) / variance);
+}
+
+void predict(features test[], int arr_size, predicted_prob prediction[], cond_prob season[], cond_prob_range age[], cond_prob disease[], cond_prob accident[], cond_prob surgery[], cond_prob fever[], cond_prob alcohol[], cond_prob smoking[], cond_prob_range sitting[])
+{
+    // loops through each line and predict the feature
+    for (int i = 0; i < arr_size; i++)
+    {
+        prediction[i].actual_diagnosis = test[i].semendiagnosis; // store the actual diagnosis in prediction struct
+        prediction[i].normal_prob = 1;
+        prediction[i].altered_prob = 1;
+
+        //Test Season
+        for (int j = 0; j < 4; j++)
+        {
+            if (test[i].season == seasonValues[j])
+            {
+                prediction[i].normal_prob *= season[j].normal_prob;
+                prediction[i].altered_prob *= season[j].altered_prob;
+                break;
+            }
+        }
+
+        //Test Age, needs to call the gaussian function
+        prediction[i].normal_prob *= gaussian(test[i].age, age->normal_mean, age->normal_variance);
+        prediction[i].altered_prob *= gaussian(test[i].age, age->altered_mean, age->altered_variance);
+
+        //Test Childish disease
+        for (int j = 0; j < 2; j++)
+        {
+            if (test[i].disease == twoValues[j])
+            {
+                prediction[i].normal_prob *= disease[j].normal_prob;
+                prediction[i].altered_prob *= disease[j].altered_prob;
+                break;
+            }
+        }
+
+        //Test Accident
+        for (int j = 0; j < 2; j++)
+        {
+            if (test[i].accident == twoValues[j])
+            {
+                prediction[i].normal_prob *= accident[j].normal_prob;
+                prediction[i].altered_prob *= accident[j].altered_prob;
+                break;
+            }
+        }
+
+        //Test Surgery
+        for (int j = 0; j < 2; j++)
+        {
+            if (test[i].surgery == twoValues[j])
+            {
+                prediction[i].normal_prob *= surgery[j].normal_prob;
+                prediction[i].altered_prob *= surgery[j].altered_prob;
+                break;
+            }
+        }
+
+        //Test Fever
+        for (int j = 0; j < 3; j++)
+        {
+            if (test[i].fever == twoValues[j])
+            {
+                prediction[i].normal_prob *= fever[j].normal_prob;
+                prediction[i].altered_prob *= fever[j].altered_prob;
+                break;
+            }
+        }        
+
+        //Test Alcohol
+        for (int j = 0; j < 5; j++)
+        {
+            if (test[i].alcohol == twoValues[j])
+            {
+                prediction[i].normal_prob *= alcohol[j].normal_prob;
+                prediction[i].altered_prob *= alcohol[j].altered_prob;
+                break;
+            }
+        }
+
+        //Test Smoking
+        for (int j = 0; j < 3; j++)
+        {
+            if (test[i].smoker == twoValues[j])
+            {
+                prediction[i].normal_prob *= smoking[j].normal_prob;
+                prediction[i].altered_prob *= smoking[j].altered_prob;
+                break;
+            }
+        }
+
+        //Test Hours sitting down per day
+        prediction[i].normal_prob *= gaussian(test[i].sittinghours, age->normal_mean, age->normal_variance);
+        prediction[i].altered_prob *= gaussian(test[i].sittinghours, age->altered_mean, age->altered_variance);
+
+        // Predict if Normal or Altered
+        if (prediction[i].normal_prob >= prediction[i].altered_prob)
+        {
+            prediction[i].predicted_diagnosis = 0;
+        }
+        else
+        {
+            prediction[i].predicted_diagnosis = 1;
+        }
+        printf("For index: %i, normal probability: %g, altered probability: %g, predicted diagnosis: %d, actual diagnosis: %d \n", i, prediction[i].normal_prob, prediction[i].altered_prob, prediction[i].predicted_diagnosis, prediction[i].actual_diagnosis);
+    }
+}
+
+int calculateError(predicted_prob prediction[], int arr_size)
+{
+    int wrong = 0;
+    for (int i = 0; i < arr_size; i++)
+    {
+        if(prediction[i].predicted_diagnosis != prediction[i].actual_diagnosis)
+        {
+            wrong++;
+        }
+    }
+    return wrong;
 }

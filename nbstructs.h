@@ -27,3 +27,11 @@ typedef struct cond_prob_range
     float altered_mean; // mean for altered diagnosis
     float altered_variance; // variance for normal diagnosis
 } cond_prob_range;
+
+typedef struct predicted_prob
+{
+    double normal_prob;
+    double altered_prob;
+    char predicted_diagnosis;
+    char actual_diagnosis;
+} predicted_prob;
