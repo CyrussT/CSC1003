@@ -15,8 +15,6 @@ typedef struct features
 // To update explanation of each var:
 typedef struct cond_prob
 {
-    int normal_count;
-    int altered_count;
     float normal_prob;
     float altered_prob;
 } cond_prob;
