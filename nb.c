@@ -73,7 +73,7 @@ int main()
         }
     }
 
-    //Calculating Probability for normal values
+    //Calculating Probability for normal values, by looping each individual line
     loopArr(traininginput, TRAININGSIZE, probabilitySum);
     //Calculating mean and variance for feature 2 and 9
     cond_prob_range age_prob[] = {0, 0, 0, 0};
@@ -133,6 +133,7 @@ void scanArray(features arr[])
 
 void loopArr(features arr[], int arr_size, int probabilitySum[NUMOFOUTCOMES][FEATURESIZE][MAXINDEXSIZE])
 {
+    // looping through each individual line to determine normal or altered and calls calculateFeatures with the diagnosis as parameter
     for (int i = 0; i < arr_size; i++)
     {
         if (arr[i].semendiagnosis == 0)
@@ -148,6 +149,8 @@ void loopArr(features arr[], int arr_size, int probabilitySum[NUMOFOUTCOMES][FEA
 
 void calculateFeatures(features arr[], int result, int probabilitySum[NUMOFOUTCOMES][FEATURESIZE][MAXINDEXSIZE])
 {
+    // Input: A single line
+    // Iterates through the features of the line, increment the count of that feature in the array probabilitySum
     // new season at index 0
     //float seasonValues[4] = {-1, -0.33, 0.33, 1};
     sumFloatFeatures(arr->season, result, 0, 4, seasonValues, probabilitySum);
@@ -170,6 +173,7 @@ void calculateFeatures(features arr[], int result, int probabilitySum[NUMOFOUTCO
 
 void sumFloatFeatures(float num, int result, int index, int value_size, float values[], int probabilitySum[NUMOFOUTCOMES][FEATURESIZE][MAXINDEXSIZE])
 {
+    // Increments the array probabilitySum by matching the num against the possible array indexes for floats
     for (int i = 0; i < value_size; i++)
     {
         if (num == values[i])
@@ -181,6 +185,7 @@ void sumFloatFeatures(float num, int result, int index, int value_size, float va
 
 void sumFeatures(int num, int result, int index, int value_size, int values[], int probabilitySum[NUMOFOUTCOMES][FEATURESIZE][MAXINDEXSIZE])
 {
+    // Increments the array probabilitySum by matching the num against the possible array indexes for floats
     for (int i = 0; i < value_size; i++)
     {
         if(num == values[i])
@@ -192,6 +197,7 @@ void sumFeatures(int num, int result, int index, int value_size, int values[], i
 
 void calculateFeature2(features arr[], cond_prob_range input[], int arr_size)
 {
+    // Used for calculating feature 2, age
     int i; 
     float normal_sum = 0, altered_sum = 0;
 
@@ -237,6 +243,7 @@ void calculateFeature2(features arr[], cond_prob_range input[], int arr_size)
 
 void calculateFeature9(features arr[], cond_prob_range input[], int arr_size)
 {
+    // used for calculating feature 9, hours sitting down.
     int i; 
     float normal_sum = 0, altered_sum = 0;
 
@@ -264,11 +271,11 @@ void calculateFeature9(features arr[], cond_prob_range input[], int arr_size)
     {
         if(arr[i].semendiagnosis == 0)
         {
-            sigma_normal += pow((arr[i].age - input->normal_mean), 2);
+            sigma_normal += pow((arr[i].sittinghours - input->normal_mean), 2);
         }
         else if(arr[i].semendiagnosis == 1)
         {
-            sigma_altered += pow((arr[i].age - input->altered_mean), 2);
+            sigma_altered += pow((arr[i].sittinghours - input->altered_mean), 2);
         }
     }
 
