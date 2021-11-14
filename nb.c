@@ -2,6 +2,7 @@
 #include <math.h>
 #include <string.h>
 #include <stdlib.h>
+#include <time.h>
 #include "nbstructs.h"
 
 #define TRAININGSIZE 80 /* 80% of data used for training accuracy */
@@ -21,11 +22,13 @@ void calculateFeature9(features arr[], cond_prob_range input[], int arr_size);
 void calculateProbability(cond_prob input[], int index_size, int indexNumber, int probabilitySum[NUMOFOUTCOMES][FEATURESIZE][MAXINDEXSIZE]);
 float gaussian(float x, float mean, float variance);
 void predict(features test[], int arr_size, predicted_prob prediction[], cond_prob season[], cond_prob_range age[], cond_prob disease[], cond_prob accident[], cond_prob surger[], cond_prob fever[], cond_prob alcohol[], cond_prob smoking[], cond_prob_range sitting[]);
-int calculateError(predicted_prob prediction[], int arr_size);
+void calculateError(predicted_prob prediction[], int arr_size, confusion_matrix errors[]);
+void plotConfusion(confusion_matrix errors[]);
 features traininginput[TRAININGSIZE], testinput[DATACOUNT];
 
 // Feature Variables
 int normal_diagnosis, altered_diagnosis;
+float prior_normal, prior_altered;
 float seasonValues[4] = {-1, -0.33, 0.33, 1};
 int twoValues[2] = {0, 1};
 int threeValues[3] = {-1, 0, 1};
@@ -33,6 +36,9 @@ float alcoholValues[5] = {0.2, 0.4, 0.6, 0.8, 1};
 
 int main()
 {
+    //Start clock timer
+    double timer = 0.0;
+    clock_t start = clock();
     // create a temporary table in heap
     features *input = malloc(sizeof(features) * (TRAININGSIZE + DATACOUNT));
     // store entire data into the input
@@ -61,8 +67,11 @@ int main()
         }
     }
 
-    printf("Prior Probability\nNormal: %i, Altered: %i \n", normal_diagnosis, altered_diagnosis); // Checked output and figure tallys.
-    
+    prior_normal = (float) normal_diagnosis / (float) TRAININGSIZE;
+    prior_altered = (float) altered_diagnosis / (float) TRAININGSIZE;
+    printf("=====================\n");
+    printf("Prior Probability\nNormal: %f, Altered: %f \n", prior_normal, prior_altered); // Checked output and figure tallys.
+    printf("=====================\n");
     //Initialise a 3D array, index 0 is outcome, index 1 is feature number, index 2 is feature index
     int probabilitySum[NUMOFOUTCOMES][FEATURESIZE][MAXINDEXSIZE];
     for (int i = 0; i < NUMOFOUTCOMES; i ++)
@@ -112,13 +121,25 @@ int main()
     printf("Smoking 0: %f, %f, Smoking 1: %f, %f, Smoking 2: %f, %f\n", smoking[0].normal_prob, smoking[0].altered_prob, smoking[1].normal_prob, smoking[1].altered_prob, smoking[2].normal_prob, smoking[2].altered_prob);
     printf("Hours sitting normal mean: %f, variance: %f, Hours sitting altered mean: %f, variance: %f\n", sitting->normal_mean, sitting->normal_variance, sitting->altered_mean, sitting->altered_variance);
    
-   //Testing Phase
-   predicted_prob prediction[DATACOUNT];
-   predict(testinput, DATACOUNT, prediction, season, age, disease, accident, surgery, fever, alcohol, smoking, sitting);
-   int errors = calculateError(prediction, DATACOUNT);
-   float accuracy = (float)1 - ((float) errors / (float) DATACOUNT);
-   printf("Total Errors: %i out of %i at %f accuracy!\n", errors, DATACOUNT, accuracy);
-   return 0;
+    //Testing Phase
+    predicted_prob prediction[DATACOUNT];
+    printf("=====================\n");
+    printf("Posterior Probability\n");
+    printf("=====================\n");
+    predict(testinput, DATACOUNT, prediction, season, age, disease, accident, surgery, fever, alcohol, smoking, sitting);
+    confusion_matrix errors[4] = {0, 0, 0, 0};
+    printf("=====================\n");
+    printf("Confusion Matrix\n");
+    printf("=====================\n");
+    calculateError(prediction, DATACOUNT, errors);
+    //Plot confusion matrix
+    plotConfusion(errors);
+    
+    //Stop timer and print time taken
+    clock_t end = clock();
+    timer += (double) (end - start) / CLOCKS_PER_SEC;
+    printf("Total time taken: %g seconds", timer);
+    return 0;
 }
 
 void scanArray(features arr[])
@@ -412,6 +433,10 @@ void predict(features test[], int arr_size, predicted_prob prediction[], cond_pr
         //Test Hours sitting down per day
         prediction[i].normal_prob *= gaussian(test[i].sittinghours, age->normal_mean, age->normal_variance);
         prediction[i].altered_prob *= gaussian(test[i].sittinghours, age->altered_mean, age->altered_variance);
+        
+        //Multiply Prior Probability
+        prediction[i].normal_prob *= prior_normal;
+        prediction[i].altered_prob *= prior_altered;
 
         // Predict if Normal or Altered
         if (prediction[i].normal_prob >= prediction[i].altered_prob)
@@ -426,15 +451,57 @@ void predict(features test[], int arr_size, predicted_prob prediction[], cond_pr
     }
 }
 
-int calculateError(predicted_prob prediction[], int arr_size)
+void calculateError(predicted_prob prediction[], int arr_size, confusion_matrix errors[])
 {
-    int wrong = 0;
     for (int i = 0; i < arr_size; i++)
     {
-        if(prediction[i].predicted_diagnosis != prediction[i].actual_diagnosis)
+        switch (prediction[i].actual_diagnosis)
         {
-            wrong++;
+            // Normal Diagnosis
+            case 0:
+                if (prediction[i].predicted_diagnosis == prediction[i].actual_diagnosis)
+                {
+                    errors->true_negative++;
+                }
+                else
+                {
+                    errors->false_negative++;
+                }
+                break;
+
+            // Altered Diagnosis
+            case 1:
+                if (prediction[i].predicted_diagnosis == prediction[i].actual_diagnosis)
+                {
+                    errors->true_positive++;
+                }
+                else
+                {
+                    errors->false_positive++;
+                }
+                break;
+
+            break;
         }
     }
-    return wrong;
+    errors->total_errors = errors->false_positive + errors->false_negative;
+    printf("After: Matrix Values:\nTotal Errors: %i\nTrue Positive: %i\nTrue Negative: %i\nFalse Positive: %i\nFalse Negative: %i\n",errors->total_errors,errors->true_negative, errors->true_positive, errors->false_positive, errors->false_negative);
+}
+
+void plotConfusion(confusion_matrix errors[])
+{
+    FILE *fp = fopen("data.txt", "w");
+    FILE *gp = popen("gnuplot -persistent", "w");
+
+    // populate data.dat
+    fprintf(fp, "%i %i\n", errors->true_negative, errors->false_positive);
+    fprintf(fp, "%i %i\n", errors->false_negative, errors->true_positive);
+
+    // set range and ticks
+    fprintf(gp, "set palette rgbformula -7,2,-7\n");
+    fprintf(gp, "set xrange[-0.5:1.5]\nset yrange[-0.5:1.5]\nset xtics 1\nset ytics 1\n");
+    fprintf(gp, "set title 'Confusion Matrix for Sperm Diagnosis'\n");
+    fprintf(gp, "plot 'data.txt' matrix using 1:2:3 with image, 'data.txt' matrix using 1:2:(sprintf('%i',$3) ) with labels\n");
+    fclose(fp);
+    pclose(gp);
 }

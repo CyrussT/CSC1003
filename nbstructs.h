@@ -30,8 +30,17 @@ typedef struct cond_prob_range
 
 typedef struct predicted_prob
 {
-    double normal_prob;
-    double altered_prob;
+    double normal_prob; // Posterior Normal Probability
+    double altered_prob; // Posterior Altered Probability
     char predicted_diagnosis;
     char actual_diagnosis;
 } predicted_prob;
+
+typedef struct confusion_matrix
+{
+    int true_positive;
+    int true_negative;
+    int false_positive;
+    int false_negative;
+    int total_errors;
+} confusion_matrix;
