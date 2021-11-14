@@ -42,6 +42,9 @@ int main()
     // create a temporary table in heap
     features *input = malloc(sizeof(features) * (TRAININGSIZE + DATACOUNT));
     // store entire data into the input
+    printf("=====================\n");
+    printf("Reading in Data\n");
+    printf("=====================\n");
     scanArray(input);
     // split first 80% of data into traininginput and remaining 20% into testinput
     memcpy(traininginput, input, TRAININGSIZE * sizeof(features));
@@ -66,7 +69,6 @@ int main()
             exit(1);
         }
     }
-
     prior_normal = (float) normal_diagnosis / (float) TRAININGSIZE;
     prior_altered = (float) altered_diagnosis / (float) TRAININGSIZE;
     printf("=====================\n");
@@ -108,7 +110,6 @@ int main()
     cond_prob smoking[3]; // Smoking Habit
     calculateProbability(smoking, 3, 7, probabilitySum);
     // Printing of all the probabilities: 
-    printf("=====================\n");
     printf("Overall Probability\n");
     printf("=====================\n");
     printf("Season 0: %f, %f, Season 1: %f, %f, Season 2: %f, %f, Season 3: %f, %f\n", season[0].normal_prob, season[0].altered_prob, season[1].normal_prob, season[1].altered_prob, season[2].normal_prob, season[2].altered_prob, season[3].normal_prob, season[3].altered_prob);
@@ -134,7 +135,7 @@ int main()
     calculateError(prediction, DATACOUNT, errors);
     //Plot confusion matrix
     plotConfusion(errors);
-    
+
     //Stop timer and print time taken
     clock_t end = clock();
     timer += (double) (end - start) / CLOCKS_PER_SEC;
