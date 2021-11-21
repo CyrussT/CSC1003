@@ -5,13 +5,18 @@
 #include <time.h>
 #include "nbstructs.h"
 
-#define TRAININGSIZE 80 /* 80% of data used for training accuracy */
-#define DATACOUNT 20    /* 20% of data used for testing accuracy */
+//#define TRAININGSIZE 80 /* 80% of data used for training accuracy */
+//#define DATACOUNT 20    /* 20% of data used for testing accuracy */
 #define FEATURESIZE 9
 #define MAXINDEXSIZE 5
 #define NUMOFOUTCOMES 2
 #define PI 3.14159
 
+// Variables for Reading Input
+int TRAININGSIZE = 0;
+int DATACOUNT = 0;
+
+void trainTestSize(int *train, int *test);
 void scanArray(features arr[]);
 void loopArr(features arr[], int arr_size, int probabilitySum[NUMOFOUTCOMES][FEATURESIZE][MAXINDEXSIZE]);
 void calculateFeatures(features arr[], int result, int probabilitySum[NUMOFOUTCOMES][FEATURESIZE][MAXINDEXSIZE]);
@@ -24,7 +29,7 @@ float gaussian(float x, float mean, float variance);
 void predict(features test[], int arr_size, predicted_prob prediction[], cond_prob season[], cond_prob_range age[], cond_prob disease[], cond_prob accident[], cond_prob surger[], cond_prob fever[], cond_prob alcohol[], cond_prob smoking[], cond_prob_range sitting[]);
 void calculateError(predicted_prob prediction[], int arr_size, confusion_matrix errors[]);
 void plotConfusion(confusion_matrix errors[]);
-features traininginput[TRAININGSIZE], testinput[DATACOUNT];
+void naivesBayes();
 
 // Feature Variables
 int normal_diagnosis, altered_diagnosis;
@@ -39,108 +44,22 @@ int main()
     //Start clock timer
     double timer = 0.0;
     clock_t start = clock();
-    // create a temporary table in heap
-    features *input = malloc(sizeof(features) * (TRAININGSIZE + DATACOUNT));
-    // store entire data into the input
-    printf("=====================\n");
-    printf("Reading in Data\n");
-    printf("=====================\n");
-    scanArray(input);
-    // split first 80% of data into traininginput and remaining 20% into testinput
-    memcpy(traininginput, input, TRAININGSIZE * sizeof(features));
-    memcpy(testinput,&input[80], DATACOUNT * sizeof(features));
-    // free temporary table from heap 
-    free(input);
-
-    // Calculating Prior Probability
-    for (int i = 0; i < TRAININGSIZE; i++)
-    {
-        if (traininginput[i].semendiagnosis == 1)
-        {
-            altered_diagnosis++;
-        }
-        else if (traininginput[i].semendiagnosis == 0)
-        {
-            normal_diagnosis++;
-        }
-        else
-        {
-            printf("Error - unable to calculate Prior Probability\n");
-            exit(1);
-        }
-    }
-    prior_normal = (float) normal_diagnosis / (float) TRAININGSIZE;
-    prior_altered = (float) altered_diagnosis / (float) TRAININGSIZE;
-    printf("=====================\n");
-    printf("Prior Probability\nNormal: %f, Altered: %f \n", prior_normal, prior_altered); // Checked output and figure tallys.
-    printf("=====================\n");
-    //Initialise a 3D array, index 0 is outcome, index 1 is feature number, index 2 is feature index
-    int probabilitySum[NUMOFOUTCOMES][FEATURESIZE][MAXINDEXSIZE];
-    for (int i = 0; i < NUMOFOUTCOMES; i ++)
-    {
-        for (int j = 0; j < FEATURESIZE; j++)
-        {
-            for (int k = 0; k < MAXINDEXSIZE; k++)
-            {
-                probabilitySum[i][j][k] = 0;
-            }
-        }
-    }
-
-    //Calculating Probability for normal values, by looping each individual line
-    loopArr(traininginput, TRAININGSIZE, probabilitySum);
-    //Calculating mean and variance for feature 2 and 9
-    cond_prob_range age[] = {0, 0, 0, 0};
-    cond_prob_range sitting[] = {0, 0, 0, 0};
-    calculateFeature2(traininginput, age, TRAININGSIZE);
-    calculateFeature9(traininginput, sitting, TRAININGSIZE);
-    // Populating probability 
-    cond_prob season[4]; //Season
-    calculateProbability(season, 4, 0, probabilitySum);
-    cond_prob disease[2]; // Childish Disease
-    calculateProbability(disease, 2, 2, probabilitySum);
-    cond_prob accident[2]; // Accident or serious trauma
-    calculateProbability(accident, 2, 3, probabilitySum);
-    cond_prob surgery[2]; // Surgical Intervention
-    calculateProbability(surgery, 2, 4, probabilitySum);
-    cond_prob fever[3]; // High fevers
-    calculateProbability(fever, 3, 5, probabilitySum);
-    cond_prob alcohol[5]; // Freq. of Alcohol Consumption
-    calculateProbability(alcohol, 5, 6, probabilitySum);
-    cond_prob smoking[3]; // Smoking Habit
-    calculateProbability(smoking, 3, 7, probabilitySum);
-    // Printing of all the probabilities: 
-    printf("Overall Probability\n");
-    printf("=====================\n");
-    printf("Season 0: %f, %f, Season 1: %f, %f, Season 2: %f, %f, Season 3: %f, %f\n", season[0].normal_prob, season[0].altered_prob, season[1].normal_prob, season[1].altered_prob, season[2].normal_prob, season[2].altered_prob, season[3].normal_prob, season[3].altered_prob);
-    printf("Normal age mean: %f, variance: %f, Altered age mean: %f, variance: %f\n", age->normal_mean, age->normal_variance, age->altered_mean, age->altered_variance);    
-    printf("Disease 0: %f, %f, Disease 1: %f, %f\n", disease[0].normal_prob, disease[0].altered_prob, disease[1].normal_prob, disease[1].altered_prob);
-    printf("Accident 0: %f, %f, Accident 1: %f, %f\n", accident[0].normal_prob, accident[0].altered_prob, accident[1].normal_prob, accident[1].altered_prob);
-    printf("Surgery 0: %f, %f, Surgery 1: %f, %f\n", surgery[0].normal_prob, surgery[0].altered_prob, surgery[1].normal_prob, surgery[1].altered_prob);
-    printf("Fever 0: %f, %f, Fever 1: %f, %f, Fever 2: %f, %f\n", fever[0].normal_prob, fever[0].altered_prob, fever[1].normal_prob, fever[1].altered_prob, fever[2].normal_prob, fever[2].altered_prob);
-    printf("Alcohol 0: %f, %f, Alcohol 1: %f, %f, Alcohol 2: %f, %f, Alcohol 3: %f, %f, Alcohol 4: %f, %f\n", alcohol[0].normal_prob, alcohol[0].altered_prob, alcohol[1].normal_prob, alcohol[1].altered_prob, alcohol[2].normal_prob, alcohol[2].altered_prob, alcohol[3].normal_prob, alcohol[3].altered_prob, alcohol[4].normal_prob, alcohol[4].altered_prob);
-    printf("Smoking 0: %f, %f, Smoking 1: %f, %f, Smoking 2: %f, %f\n", smoking[0].normal_prob, smoking[0].altered_prob, smoking[1].normal_prob, smoking[1].altered_prob, smoking[2].normal_prob, smoking[2].altered_prob);
-    printf("Hours sitting normal mean: %f, variance: %f, Hours sitting altered mean: %f, variance: %f\n", sitting->normal_mean, sitting->normal_variance, sitting->altered_mean, sitting->altered_variance);
-   
-    //Testing Phase
-    predicted_prob prediction[DATACOUNT];
-    printf("=====================\n");
-    printf("Posterior Probability\n");
-    printf("=====================\n");
-    predict(testinput, DATACOUNT, prediction, season, age, disease, accident, surgery, fever, alcohol, smoking, sitting);
-    confusion_matrix errors[4] = {0, 0, 0, 0};
-    printf("=====================\n");
-    printf("Confusion Matrix\n");
-    printf("=====================\n");
-    calculateError(prediction, DATACOUNT, errors);
-    //Plot confusion matrix
-    plotConfusion(errors);
-
+    naivesBayes(80, 20);
     //Stop timer and print time taken
     clock_t end = clock();
     timer += (double) (end - start) / CLOCKS_PER_SEC;
     printf("Total time taken: %g seconds", timer);
     return 0;
+}
+
+void trainTestSize(int *train, int *test)
+{
+    printf("Please enter training size: \n");
+    scanf("%d", &train);
+    //while(getchar()!='\n');
+    printf("Please enter test size: \n");
+    scanf("%d", &test);
+    //while(getchar()!='\n');
 }
 
 void scanArray(features arr[])
@@ -505,4 +424,122 @@ void plotConfusion(confusion_matrix errors[])
     fprintf(gp, "plot 'data.txt' matrix using 1:2:3 with image, 'data.txt' matrix using 1:2:(sprintf('%i',$3) ) with labels\n");
     fclose(fp);
     pclose(gp);
+}
+
+void naivesBayes(int TRAININGSIZE, int DATACOUNT)
+{
+    trainTestSize(&TRAININGSIZE, &DATACOUNT);
+    // Create struct to store the training and test data
+    features traininginput[TRAININGSIZE], testinput[DATACOUNT];
+    // create a temporary table in heap
+    features *input = malloc(sizeof(features) * (TRAININGSIZE + DATACOUNT));
+    // store entire data into the input
+    printf("=====================\n");
+    printf("Reading in Data\n");
+    printf("=====================\n");
+    scanArray(input);
+    // split first 80% of data into traininginput and remaining 20% into testinput
+    memcpy(traininginput, input, TRAININGSIZE * sizeof(features));
+    memcpy(testinput,&input[80], DATACOUNT * sizeof(features));
+    // free temporary table from heap 
+    free(input);
+    // Calculating Prior Probability
+    for (int i = 0; i < TRAININGSIZE; i++)
+    {
+        if (traininginput[i].semendiagnosis == 1)
+        {
+            altered_diagnosis++;
+        }
+        else if (traininginput[i].semendiagnosis == 0)
+        {
+            normal_diagnosis++;
+        }
+        else
+        {
+            printf("Error - unable to calculate Prior Probability\n");
+            exit(1);
+        }
+    }
+    prior_normal = (float) normal_diagnosis / (float) TRAININGSIZE;
+    prior_altered = (float) altered_diagnosis / (float) TRAININGSIZE;
+    printf("=====================\n");
+    printf("Prior Probability\nNormal: %f, Altered: %f \n", prior_normal, prior_altered); // Checked output and figure tallys.
+    printf("=====================\n");
+    //Initialise a 3D array, index 0 is outcome, index 1 is feature number, index 2 is feature index
+    int probabilitySum[NUMOFOUTCOMES][FEATURESIZE][MAXINDEXSIZE];
+    for (int i = 0; i < NUMOFOUTCOMES; i ++)
+    {
+        for (int j = 0; j < FEATURESIZE; j++)
+        {
+            for (int k = 0; k < MAXINDEXSIZE; k++)
+            {
+                probabilitySum[i][j][k] = 0;
+            }
+        }
+    }
+
+    //Calculating Probability for normal values, by looping each individual line
+    loopArr(traininginput, TRAININGSIZE, probabilitySum);
+    //Calculating mean and variance for feature 2 and 9
+    cond_prob_range age[] = {0, 0, 0, 0};
+    cond_prob_range sitting[] = {0, 0, 0, 0};
+    calculateFeature2(traininginput, age, TRAININGSIZE);
+    calculateFeature9(traininginput, sitting, TRAININGSIZE);
+    // Populating probability 
+    cond_prob season[4]; //Season
+    calculateProbability(season, 4, 0, probabilitySum);
+    cond_prob disease[2]; // Childish Disease
+    calculateProbability(disease, 2, 2, probabilitySum);
+    cond_prob accident[2]; // Accident or serious trauma
+    calculateProbability(accident, 2, 3, probabilitySum);
+    cond_prob surgery[2]; // Surgical Intervention
+    calculateProbability(surgery, 2, 4, probabilitySum);
+    cond_prob fever[3]; // High fevers
+    calculateProbability(fever, 3, 5, probabilitySum);
+    cond_prob alcohol[5]; // Freq. of Alcohol Consumption
+    calculateProbability(alcohol, 5, 6, probabilitySum);
+    cond_prob smoking[3]; // Smoking Habit
+    calculateProbability(smoking, 3, 7, probabilitySum);
+    // Printing of all the probabilities: 
+    printf("Overall Probability\n");
+    printf("=====================\n");
+    printf("Season 0: %f, %f, Season 1: %f, %f, Season 2: %f, %f, Season 3: %f, %f\n", season[0].normal_prob, season[0].altered_prob, season[1].normal_prob, season[1].altered_prob, season[2].normal_prob, season[2].altered_prob, season[3].normal_prob, season[3].altered_prob);
+    printf("Normal age mean: %f, variance: %f, Altered age mean: %f, variance: %f\n", age->normal_mean, age->normal_variance, age->altered_mean, age->altered_variance);    
+    printf("Disease 0: %f, %f, Disease 1: %f, %f\n", disease[0].normal_prob, disease[0].altered_prob, disease[1].normal_prob, disease[1].altered_prob);
+    printf("Accident 0: %f, %f, Accident 1: %f, %f\n", accident[0].normal_prob, accident[0].altered_prob, accident[1].normal_prob, accident[1].altered_prob);
+    printf("Surgery 0: %f, %f, Surgery 1: %f, %f\n", surgery[0].normal_prob, surgery[0].altered_prob, surgery[1].normal_prob, surgery[1].altered_prob);
+    printf("Fever 0: %f, %f, Fever 1: %f, %f, Fever 2: %f, %f\n", fever[0].normal_prob, fever[0].altered_prob, fever[1].normal_prob, fever[1].altered_prob, fever[2].normal_prob, fever[2].altered_prob);
+    printf("Alcohol 0: %f, %f, Alcohol 1: %f, %f, Alcohol 2: %f, %f, Alcohol 3: %f, %f, Alcohol 4: %f, %f\n", alcohol[0].normal_prob, alcohol[0].altered_prob, alcohol[1].normal_prob, alcohol[1].altered_prob, alcohol[2].normal_prob, alcohol[2].altered_prob, alcohol[3].normal_prob, alcohol[3].altered_prob, alcohol[4].normal_prob, alcohol[4].altered_prob);
+    printf("Smoking 0: %f, %f, Smoking 1: %f, %f, Smoking 2: %f, %f\n", smoking[0].normal_prob, smoking[0].altered_prob, smoking[1].normal_prob, smoking[1].altered_prob, smoking[2].normal_prob, smoking[2].altered_prob);
+    printf("Hours sitting normal mean: %f, variance: %f, Hours sitting altered mean: %f, variance: %f\n", sitting->normal_mean, sitting->normal_variance, sitting->altered_mean, sitting->altered_variance);
+   
+    // Posterior Probability of Training Data
+    predicted_prob train_prediction[TRAININGSIZE];
+    printf("=====================\n");
+    printf("Posterior Probability for Training Data\n");
+    printf("=====================\n");
+    predict(traininginput, TRAININGSIZE, train_prediction, season, age, disease, accident, surgery, fever, alcohol, smoking, sitting);
+
+    confusion_matrix train_errors[4] = {0, 0, 0, 0};
+    printf("=====================\n");
+    printf("Confusion Matrix\n");
+    printf("=====================\n");
+    calculateError(train_prediction, TRAININGSIZE, train_errors);
+    //Plot confusion matrix
+    //plotConfusion(train_errors);
+
+    //Testing Phase
+    predicted_prob test_prediction[DATACOUNT];
+    printf("=====================\n");
+    printf("Posterior Probability for Test Data\n");
+    printf("=====================\n");
+    predict(testinput, DATACOUNT, test_prediction, season, age, disease, accident, surgery, fever, alcohol, smoking, sitting);
+
+    confusion_matrix test_errors[4] = {0, 0, 0, 0};
+    printf("=====================\n");
+    printf("Confusion Matrix\n");
+    printf("=====================\n");
+    calculateError(test_prediction, DATACOUNT, test_errors);
+    //Plot confusion matrix
+    //plotConfusion(test_errors);
 }
