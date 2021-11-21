@@ -257,7 +257,7 @@ void calculateProbability(cond_prob input[], int index_size, int indexNumber, in
 
 float gaussian(float x, float mean, float variance)
 {
-    return (1 / (sqrt(2 * PI))) *exp(-0.5 * pow((x - mean),2) / variance);
+    return (1 / (sqrt(2 * PI))) * exp(-0.5 * (pow((x - mean),2) / variance));
 }
 
 void predict(features test[], int arr_size, predicted_prob prediction[], cond_prob season[], cond_prob_range age[], cond_prob disease[], cond_prob accident[], cond_prob surgery[], cond_prob fever[], cond_prob alcohol[], cond_prob smoking[], cond_prob_range sitting[])
@@ -351,8 +351,8 @@ void predict(features test[], int arr_size, predicted_prob prediction[], cond_pr
         }
 
         //Test Hours sitting down per day
-        prediction[i].normal_prob *= gaussian(test[i].sittinghours, age->normal_mean, age->normal_variance);
-        prediction[i].altered_prob *= gaussian(test[i].sittinghours, age->altered_mean, age->altered_variance);
+        prediction[i].normal_prob *= gaussian(test[i].sittinghours, sitting->normal_mean, sitting->normal_variance);
+        prediction[i].altered_prob *= gaussian(test[i].sittinghours, sitting->altered_mean, sitting->altered_variance);
         
         //Multiply Prior Probability
         prediction[i].normal_prob *= prior_normal;
@@ -405,7 +405,7 @@ void calculateError(predicted_prob prediction[], int arr_size, confusion_matrix 
         }
     }
     errors->total_errors = errors->false_positive + errors->false_negative;
-    printf("After: Matrix Values:\nTotal Errors: %i\nTrue Positive: %i\nTrue Negative: %i\nFalse Positive: %i\nFalse Negative: %i\n",errors->total_errors,errors->true_negative, errors->true_positive, errors->false_positive, errors->false_negative);
+    printf("After: Matrix Values:\nTotal Errors: %i\nTrue Positive: %i\nTrue Negative: %i\nFalse Positive: %i\nFalse Negative: %i\n",errors->total_errors,errors->true_positive, errors->true_negative, errors->false_positive, errors->false_negative);
 }
 
 void plotConfusion(confusion_matrix errors[])
