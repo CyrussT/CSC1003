@@ -25,7 +25,7 @@ void sumFeatures(int num, int result, int index, int value_size, int values[], i
 void calculateFeature2(features arr[], cond_prob_range input[], int arr_size);
 void calculateFeature9(features arr[], cond_prob_range input[], int arr_size);
 void calculateProbability(cond_prob input[], int index_size, int indexNumber, int probabilitySum[NUMOFOUTCOMES][FEATURESIZE][MAXINDEXSIZE]);
-float gaussian(float x, float mean, float variance);
+double gaussian(float x, float mean, float variance);
 void predict(features test[], int arr_size, predicted_prob prediction[], cond_prob season[], cond_prob_range age[], cond_prob disease[], cond_prob accident[], cond_prob surger[], cond_prob fever[], cond_prob alcohol[], cond_prob smoking[], cond_prob_range sitting[]);
 void calculateError(predicted_prob prediction[], int arr_size, confusion_matrix errors[]);
 void plotConfusion(confusion_matrix errors[]);
@@ -255,7 +255,7 @@ void calculateProbability(cond_prob input[], int index_size, int indexNumber, in
    }
 }
 
-float gaussian(float x, float mean, float variance)
+double gaussian(float x, float mean, float variance)
 {
     return (1 / (sqrt(2 * PI))) * exp(-0.5 * (pow((x - mean),2) / variance));
 }
@@ -320,7 +320,7 @@ void predict(features test[], int arr_size, predicted_prob prediction[], cond_pr
         //Test Fever
         for (int j = 0; j < 3; j++)
         {
-            if (test[i].fever == twoValues[j])
+            if (test[i].fever == threeValues[j])
             {
                 prediction[i].normal_prob *= fever[j].normal_prob;
                 prediction[i].altered_prob *= fever[j].altered_prob;
@@ -331,7 +331,7 @@ void predict(features test[], int arr_size, predicted_prob prediction[], cond_pr
         //Test Alcohol
         for (int j = 0; j < 5; j++)
         {
-            if (test[i].alcohol == twoValues[j])
+            if (test[i].alcohol == alcoholValues[j])
             {
                 prediction[i].normal_prob *= alcohol[j].normal_prob;
                 prediction[i].altered_prob *= alcohol[j].altered_prob;
@@ -342,7 +342,7 @@ void predict(features test[], int arr_size, predicted_prob prediction[], cond_pr
         //Test Smoking
         for (int j = 0; j < 3; j++)
         {
-            if (test[i].smoker == twoValues[j])
+            if (test[i].smoker == threeValues[j])
             {
                 prediction[i].normal_prob *= smoking[j].normal_prob;
                 prediction[i].altered_prob *= smoking[j].altered_prob;
@@ -428,7 +428,7 @@ void plotConfusion(confusion_matrix errors[])
 
 void naivesBayes(int TRAININGSIZE, int DATACOUNT)
 {
-    trainTestSize(&TRAININGSIZE, &DATACOUNT);
+    //trainTestSize(&TRAININGSIZE, &DATACOUNT);
     // Create struct to store the training and test data
     features traininginput[TRAININGSIZE], testinput[DATACOUNT];
     // create a temporary table in heap
