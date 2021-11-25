@@ -87,6 +87,10 @@ void loopArr(features arr[], int arr_size, int probabilitySum[NUMOFOUTCOMES][FEA
     // looping through each individual line to determine normal or altered and calls calculateFeatures with the diagnosis as parameter
     for (int i = 0; i < arr_size; i++)
     {
+        // if (i = 2)
+        // {
+        //     printf("test");
+        // }
         if (arr[i].semendiagnosis == 0)
         {
             calculateFeatures(&arr[i], 0, probabilitySum);
@@ -249,9 +253,9 @@ void calculateProbability(cond_prob input[], int index_size, int indexNumber, in
     */
    for (int i = 0; i < index_size; i++)
    {
-       input[i].normal_prob = (float) probabilitySum[0][indexNumber][i] / (float) normal_diagnosis;
-       input[i].altered_prob = (float) probabilitySum[1][indexNumber][i] / (float) altered_diagnosis;
-       //printf("Feature %i at Index %i: Normal Probability: %f, Altered Probability: %f\n", indexNumber, i, input[i].normal_prob, input[i].altered_prob);
+       input[i].normal_prob = (float) probabilitySum[0][indexNumber][i] / (float) (probabilitySum[0][indexNumber][i] + probabilitySum[1][indexNumber][i]);
+       input[i].altered_prob = (float) probabilitySum[1][indexNumber][i] / (float) (probabilitySum[0][indexNumber][i] + probabilitySum[1][indexNumber][i]);
+       printf("Feature %i at Index %i: Normal Probability: %f, Altered Probability: %f\n", indexNumber, i, input[i].normal_prob, input[i].altered_prob);
    }
 }
 
@@ -265,6 +269,11 @@ void predict(features test[], int arr_size, predicted_prob prediction[], cond_pr
     // loops through each line and predict the feature
     for (int i = 0; i < arr_size; i++)
     {
+        if (i == 1)
+        {
+            printf("hello!");
+        }
+
         prediction[i].actual_diagnosis = test[i].semendiagnosis; // store the actual diagnosis in prediction struct
         prediction[i].normal_prob = 1;
         prediction[i].altered_prob = 1;
@@ -281,7 +290,11 @@ void predict(features test[], int arr_size, predicted_prob prediction[], cond_pr
         }
 
         //Test Age, needs to call the gaussian function
+        //printf("normal current: %f, %f, %f\n", test[i].age, age->normal_mean, age->normal_variance);
+        //float normal_initial = gaussian(test[i].age, age->normal_mean, age->normal_variance);
         prediction[i].normal_prob *= gaussian(test[i].age, age->normal_mean, age->normal_variance);
+        //printf("altered current: %f, %f, %f\n", test[i].age, age->altered_mean, age->altered_variance);
+        //float altered_initial = gaussian(test[i].age, age->normal_mean, age->normal_variance);
         prediction[i].altered_prob *= gaussian(test[i].age, age->altered_mean, age->altered_variance);
 
         //Test Childish disease
