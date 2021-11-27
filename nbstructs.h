@@ -1,3 +1,4 @@
+// Stores the features input
 typedef struct features 
 {
     float season; // Season of analysis: -1 for Winter, -0.33 for Spring, 0.33 for Summer, 1 for Fall
@@ -12,14 +13,14 @@ typedef struct features
     char semendiagnosis; // Semen Diagnosis: 0 for Normal, 1 for Altered
 } features;
 
-// To update explanation of each var:
+// Stores the conditional probability
 typedef struct cond_prob
 {
     float normal_prob;
     float altered_prob;
 } cond_prob;
 
-// Explain usage of this struct
+// Stores the conditional probability for feature 2 and 9, age and hours spent sitting down
 typedef struct cond_prob_range
 {
     float normal_mean; // mean for normal diagnosis
@@ -28,19 +29,21 @@ typedef struct cond_prob_range
     float altered_variance; // variance for normal diagnosis
 } cond_prob_range;
 
+// Used to store normal and altered probability of each line. As well as the prediction and actual diagnosis
 typedef struct predicted_prob
 {
     double normal_prob; // Posterior Normal Probability
     double altered_prob; // Posterior Altered Probability
-    char predicted_diagnosis;
-    char actual_diagnosis;
+    char predicted_diagnosis; // Storing of predicted diagnosis result
+    char actual_diagnosis; // Storing of actual diagnosis result
 } predicted_prob;
 
+// Stores the confusion matrix values and error probability 
 typedef struct confusion_matrix
 {
-    int true_positive;
+    int true_positive; 
     int true_negative;
     int false_positive;
     int false_negative;
-    int total_errors;
+    float total_errors;
 } confusion_matrix;

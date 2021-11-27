@@ -10,10 +10,11 @@
 #define NUMOFOUTCOMES 2
 #define PI 3.14159
 
-// Variables for Reading Input
+// Global variables for TRAININGSIZE
 int TRAININGSIZE = 0;
-int DATACOUNT = 0;
+int TESTINGSIZE = 0;
 
+//Function Prototypes
 void scanArray(features arr[]);
 void loopArr(features arr[], int arr_size, int probabilitySum[NUMOFOUTCOMES][FEATURESIZE][MAXINDEXSIZE]);
 void calculateFeatures(features arr[], int result, int probabilitySum[NUMOFOUTCOMES][FEATURESIZE][MAXINDEXSIZE]);
@@ -26,9 +27,11 @@ double gaussian(float x, float mean, float variance);
 void predict(features test[], int arr_size, predicted_prob prediction[], cond_prob season[], cond_prob_range age[], cond_prob disease[], cond_prob accident[], cond_prob surger[], cond_prob fever[], cond_prob alcohol[], cond_prob smoking[], cond_prob_range sitting[]);
 void calculateError(predicted_prob prediction[], int arr_size, confusion_matrix errors[]);
 void plotConfusion(confusion_matrix errors[]);
-void naivesBayes();
+void naivesBayes(int TRAININGSIZE, int TESTINGSIZE, float *trainError, float *testError);
+void run(void);
+void plotGraph(float errors[5][2]);
 
-// Feature Variables
+// Feature Variables to be used to loop later
 int normal_diagnosis, altered_diagnosis;
 float prior_normal, prior_altered;
 float seasonValues[4] = {-1, -0.33, 0.33, 1};
@@ -41,7 +44,8 @@ int main()
     //Start clock timer
     double timer = 0.0;
     clock_t start = clock();
-    naivesBayes(80, 20);
+    // Runs the program
+    run();
     //Stop timer and print time taken
     clock_t end = clock();
     timer += (double) (end - start) / CLOCKS_PER_SEC;
@@ -51,20 +55,21 @@ int main()
 
 void scanArray(features arr[])
 {
+    // Open the file and access it using the file pointer
     FILE *fileptr;
     fileptr = fopen("fertility_Diagnosis_Data_Group1_4.txt", "r");
 
+    // Check if the file pointer is null
     if (fileptr == NULL)
     {
         printf("File could not be opened. \n");
         exit(1);
     }
 
-    int i = 0; // used to loop through the struct, features
+    // Scans each line of the file, and place it into the features arr[] array.
+    int i = 0;
     while (EOF != fscanf(fileptr, "%f, %f, %d, %d, %d, %d, %f, %d, %f, %d", &arr[i].season, &arr[i].age, &arr[i].disease, &arr[i].accident, &arr[i].surgery, &arr[i].fever, &arr[i].alcohol, &arr[i].smoker, &arr[i].sittinghours, &arr[i].semendiagnosis))
     {
-        arr[i].season = roundf(arr[i].season * 100) / 100;
-        printf("%f, %f, %d, %d, %d, %d, %f, %d, %f, %d\n", arr[i].season, arr[i].age, arr[i].disease, arr[i].accident, arr[i].surgery, arr[i].fever, arr[i].alcohol, arr[i].smoker, arr[i].sittinghours, arr[i].semendiagnosis);
         i++;
     }
 }
@@ -74,10 +79,6 @@ void loopArr(features arr[], int arr_size, int probabilitySum[NUMOFOUTCOMES][FEA
     // looping through each individual line to determine normal or altered and calls calculateFeatures with the diagnosis as parameter
     for (int i = 0; i < arr_size; i++)
     {
-        // if (i = 2)
-        // {
-        //     printf("test");
-        // }
         if (arr[i].semendiagnosis == 0)
         {
             calculateFeatures(&arr[i], 0, probabilitySum);
@@ -91,25 +92,20 @@ void loopArr(features arr[], int arr_size, int probabilitySum[NUMOFOUTCOMES][FEA
 
 void calculateFeatures(features arr[], int result, int probabilitySum[NUMOFOUTCOMES][FEATURESIZE][MAXINDEXSIZE])
 {
-    // Input: A single line
-    // Iterates through the features of the line, increment the count of that feature in the array probabilitySum
-    // new season at index 0
-    //float seasonValues[4] = {-1, -0.33, 0.33, 1};
+    // Iterates through each feature in arr[], increment the count of that feature in the array probabilitySum
+    // Season at index 0
     sumFloatFeatures(arr->season, result, 0, 4, seasonValues, probabilitySum);
-    //Childish Disease at Index 2
-    //int twoValues[2] = {0, 1};
+    // Childish Disease at Index 2
     sumFeatures(arr->disease, result, 2, 2, twoValues, probabilitySum);
-    //Accident or Serious Trauma at Index 3
+    // Accident or Serious Trauma at Index 3
     sumFeatures(arr->accident, result, 3, 2, twoValues, probabilitySum);
-    //Surgical Intervention at Index 4
+    // Surgical Intervention at Index 4
     sumFeatures(arr->surgery, result, 4, 2, twoValues, probabilitySum);
-    //High fevers at Index 5
-    //int threeValues[3] = {-1, 0, 1};
+    // High fevers at Index 5
     sumFeatures(arr->fever, result, 5, 3, threeValues, probabilitySum);
-    //Frequency of Alchohol at Index 6
-    //float alcoholValues[5] = {0.2, 0.4, 0.6, 0.8, 1};
+    // Frequency of Alchohol at Index 6
     sumFloatFeatures(arr->alcohol, result, 6, 5, alcoholValues, probabilitySum);
-    //Smoking Habit at Index 7
+    // Smoking Habit at Index 7
     sumFeatures(arr->smoker, result, 7, 3, threeValues, probabilitySum);
 }
 
@@ -128,7 +124,7 @@ void sumFloatFeatures(float num, int result, int index, int value_size, float va
 
 void sumFeatures(int num, int result, int index, int value_size, int values[], int probabilitySum[NUMOFOUTCOMES][FEATURESIZE][MAXINDEXSIZE])
 {
-    // Increments the array probabilitySum by matching the num against the possible array indexes for floats
+    // Increments the array probabilitySum by matching the num against the possible array indexes
     for (int i = 0; i < value_size; i++)
     {
         if(num == values[i])
@@ -145,7 +141,7 @@ void calculateFeature2(features arr[], cond_prob_range input[], int arr_size)
     int i; 
     float normal_sum = 0, altered_sum = 0;
 
-    //Calculating Sum of Normal and Altered
+    // Calculating Sum of Normal and Altered
     for (i = 0; i < arr_size; i++)
     {
         if(arr[i].semendiagnosis == 0)
@@ -157,13 +153,11 @@ void calculateFeature2(features arr[], cond_prob_range input[], int arr_size)
             altered_sum+= arr[i].age;
         }
     }
-    //Calculating Mean of Normal and Altered
+    // Calculating Mean of Normal and Altered
     input->normal_mean = normal_sum / normal_diagnosis;
     input->altered_mean = altered_sum / altered_diagnosis;
 
-    //printf("Age of analysis\nNormal Mean: %f, Altered Mean: %f\n", input->normal_mean, input->altered_mean);
-
-    //Calculating Sigma Portion of Normal and Altered
+    // Calculating Sigma Portion of Normal and Altered
     float sigma_normal = 0, sigma_altered = 0;
     for (i = 0; i < arr_size; i++)
     {
@@ -177,21 +171,18 @@ void calculateFeature2(features arr[], cond_prob_range input[], int arr_size)
         }
     }
 
-
-    //Calculating Variance of Normal and Altered
+    // Calculating Variance of Normal and Altered
     input->normal_variance = sigma_normal / (normal_diagnosis - 1);
     input->altered_variance = sigma_altered / (altered_diagnosis - 1);
-
-    //printf("Normal Variance: %f, Altered Variance: %f\n", input->normal_variance, input->altered_variance);
 }
 
 void calculateFeature9(features arr[], cond_prob_range input[], int arr_size)
 {
-    // used for calculating feature 9, hours sitting down.
+    // Used for calculating feature 9, hours sitting down.
     int i; 
     float normal_sum = 0, altered_sum = 0;
 
-    //Calculating Sum of Normal and Altered
+    // Calculating Sum of Normal and Altered
     for (i = 0; i < arr_size; i++)
     {
         if(arr[i].semendiagnosis == 0)
@@ -203,13 +194,11 @@ void calculateFeature9(features arr[], cond_prob_range input[], int arr_size)
             altered_sum+= arr[i].sittinghours;
         }
     }
-    //Calculating Mean of Normal and Altered
+    // Calculating Mean of Normal and Altered
     input->normal_mean = normal_sum / normal_diagnosis;
     input->altered_mean = altered_sum / altered_diagnosis;
 
-    //printf("Sitting Hours analysis\nNormal Mean: %f, Altered Mean: %f\n", input->normal_mean, input->altered_mean);
-
-    //Calculating Sigma Portion of Normal and Altered
+    // Calculating Sigma Portion of Normal and Altered
     float sigma_normal = 0, sigma_altered = 0;
     for (i = 0; i < arr_size; i++)
     {
@@ -223,12 +212,9 @@ void calculateFeature9(features arr[], cond_prob_range input[], int arr_size)
         }
     }
 
-
-    //Calculating Variance of Normal and Altered
+    // Calculating Variance of Normal and Altered
     input->normal_variance = sigma_normal / (normal_diagnosis - 1);
     input->altered_variance = sigma_altered / (altered_diagnosis - 1);
-
-    //printf("Normal Variance: %f, Altered Variance: %f\n", input->normal_variance, input->altered_variance);
 }
 
 void calculateProbability(cond_prob input[], int index_size, int indexNumber, int probabilitySum[NUMOFOUTCOMES][FEATURESIZE][MAXINDEXSIZE])
@@ -247,6 +233,9 @@ void calculateProbability(cond_prob input[], int index_size, int indexNumber, in
 
 double gaussian(float x, float mean, float variance)
 {
+    // returns the probability value given a gaussian standard distribution.
+    // input: float x, float mean, float variance
+    // output: a float probability
     return (1 / (sqrt(2 * PI))) * exp(-0.5 * (pow((x - mean),2) / variance));
 }
 
@@ -255,16 +244,11 @@ void predict(features test[], int arr_size, predicted_prob prediction[], cond_pr
     // loops through each line and predict the feature
     for (int i = 0; i < arr_size; i++)
     {
-        if (i == 1)
-        {
-            printf("hello!");
-        }
-
         prediction[i].actual_diagnosis = test[i].semendiagnosis; // store the actual diagnosis in prediction struct
         prediction[i].normal_prob = 1;
         prediction[i].altered_prob = 1;
 
-        //Test Season
+        // Test Season
         for (int j = 0; j < 4; j++)
         {
             if (test[i].season == seasonValues[j])
@@ -275,15 +259,11 @@ void predict(features test[], int arr_size, predicted_prob prediction[], cond_pr
             }
         }
 
-        //Test Age, needs to call the gaussian function
-        //printf("normal current: %f, %f, %f\n", test[i].age, age->normal_mean, age->normal_variance);
-        //float normal_initial = gaussian(test[i].age, age->normal_mean, age->normal_variance);
+        // Calling gaussian function to determine probability for age
         prediction[i].normal_prob *= gaussian(test[i].age, age->normal_mean, age->normal_variance);
-        //printf("altered current: %f, %f, %f\n", test[i].age, age->altered_mean, age->altered_variance);
-        //float altered_initial = gaussian(test[i].age, age->normal_mean, age->normal_variance);
         prediction[i].altered_prob *= gaussian(test[i].age, age->altered_mean, age->altered_variance);
 
-        //Test Childish disease
+        // Test Childish disease
         for (int j = 0; j < 2; j++)
         {
             if (test[i].disease == twoValues[j])
@@ -294,7 +274,7 @@ void predict(features test[], int arr_size, predicted_prob prediction[], cond_pr
             }
         }
 
-        //Test Accident
+        // Test Accident
         for (int j = 0; j < 2; j++)
         {
             if (test[i].accident == twoValues[j])
@@ -305,7 +285,7 @@ void predict(features test[], int arr_size, predicted_prob prediction[], cond_pr
             }
         }
 
-        //Test Surgery
+        // Test Surgery
         for (int j = 0; j < 2; j++)
         {
             if (test[i].surgery == twoValues[j])
@@ -316,7 +296,7 @@ void predict(features test[], int arr_size, predicted_prob prediction[], cond_pr
             }
         }
 
-        //Test Fever
+        // Test Fever
         for (int j = 0; j < 3; j++)
         {
             if (test[i].fever == threeValues[j])
@@ -327,7 +307,7 @@ void predict(features test[], int arr_size, predicted_prob prediction[], cond_pr
             }
         }        
 
-        //Test Alcohol
+        // Test Alcohol
         for (int j = 0; j < 5; j++)
         {
             if (test[i].alcohol == alcoholValues[j])
@@ -338,7 +318,7 @@ void predict(features test[], int arr_size, predicted_prob prediction[], cond_pr
             }
         }
 
-        //Test Smoking
+        // Test Smoking
         for (int j = 0; j < 3; j++)
         {
             if (test[i].smoker == threeValues[j])
@@ -349,11 +329,11 @@ void predict(features test[], int arr_size, predicted_prob prediction[], cond_pr
             }
         }
 
-        //Test Hours sitting down per day
+        // Calling gaussian function to determine probability for hours sitting down
         prediction[i].normal_prob *= gaussian(test[i].sittinghours, sitting->normal_mean, sitting->normal_variance);
         prediction[i].altered_prob *= gaussian(test[i].sittinghours, sitting->altered_mean, sitting->altered_variance);
         
-        //Multiply Prior Probability
+        // Multiply Prior Probability
         prediction[i].normal_prob *= prior_normal;
         prediction[i].altered_prob *= prior_altered;
 
@@ -366,12 +346,13 @@ void predict(features test[], int arr_size, predicted_prob prediction[], cond_pr
         {
             prediction[i].predicted_diagnosis = 1;
         }
-        printf("For index: %i, normal probability: %g, altered probability: %g, predicted diagnosis: %d, actual diagnosis: %d \n", i, prediction[i].normal_prob, prediction[i].altered_prob, prediction[i].predicted_diagnosis, prediction[i].actual_diagnosis);
-    }
+     }
 }
 
 void calculateError(predicted_prob prediction[], int arr_size, confusion_matrix errors[])
 {
+    // This functions compares predicted diagnosis against actual diagnosis to determine error probability and 
+    // confusion matrix and store it into the errors[] struct.
     for (int i = 0; i < arr_size; i++)
     {
         switch (prediction[i].actual_diagnosis)
@@ -379,7 +360,7 @@ void calculateError(predicted_prob prediction[], int arr_size, confusion_matrix 
             // Normal Diagnosis
             case 0:
                 if (prediction[i].predicted_diagnosis == prediction[i].actual_diagnosis)
-                {
+                { 
                     errors->true_negative++;
                 }
                 else
@@ -403,45 +384,34 @@ void calculateError(predicted_prob prediction[], int arr_size, confusion_matrix 
             break;
         }
     }
-    errors->total_errors = errors->false_positive + errors->false_negative;
-    printf("After: Matrix Values:\nTotal Errors: %i\nTrue Positive: %i\nTrue Negative: %i\nFalse Positive: %i\nFalse Negative: %i\n",errors->total_errors,errors->true_positive, errors->true_negative, errors->false_positive, errors->false_negative);
+    errors->total_errors = (errors->false_positive + errors->false_negative) / (float) arr_size;
 }
 
 void plotConfusion(confusion_matrix errors[])
 {
-    FILE *fp = fopen("data.txt", "w");
-    FILE *gp = popen("gnuplot -persistent", "w");
-
-    // populate data.dat
-    fprintf(fp, "%i %i\n", errors->true_negative, errors->false_positive);
-    fprintf(fp, "%i %i\n", errors->false_negative, errors->true_positive);
-
-    // set range and ticks
-    fprintf(gp, "set palette rgbformula -7,2,-7\n");
-    fprintf(gp, "set xrange[-0.5:1.5]\nset yrange[-0.5:1.5]\nset xtics 1\nset ytics 1\n");
-    fprintf(gp, "set title 'Confusion Matrix for Sperm Diagnosis'\n");
-    fprintf(gp, "plot 'data.txt' matrix using 1:2:3 with image, 'data.txt' matrix using 1:2:(sprintf('%i',$3) ) with labels\n");
-    fclose(fp);
-    pclose(gp);
+    // Used to plot the Confusion Matrix
+    printf("\t\t\tPositive (predicted)\t|\tNegative (predicted)\n");
+    printf("Positive (actual)\tTrue Positive = %i\t|\tFalse Negative = %i\n", errors->true_positive, errors->false_negative);
+    printf("Negative (actual)\tFalse Positive = %i\t|\tTrue Negative = %i\n\n", errors->false_positive, errors->true_negative);
 }
 
-void naivesBayes(int TRAININGSIZE, int DATACOUNT)
+void naivesBayes(int TRAININGSIZE, int TESTINGSIZE, float *trainError, float *testError)
 {
-    //trainTestSize(&TRAININGSIZE, &DATACOUNT);
     // Create struct to store the training and test data
-    features traininginput[TRAININGSIZE], testinput[DATACOUNT];
+    features traininginput[TRAININGSIZE], testinput[TESTINGSIZE];
     // create a temporary table in heap
-    features *input = malloc(sizeof(features) * (TRAININGSIZE + DATACOUNT));
+    features *input = malloc(sizeof(features) * (TRAININGSIZE + TESTINGSIZE));
     // store entire data into the input
     printf("=====================\n");
     printf("Reading in Data\n");
     printf("=====================\n");
     scanArray(input);
-    // split first 80% of data into traininginput and remaining 20% into testinput
+    // split input into 2 arrays, traininginput and testinput, based on the size passed to the function
     memcpy(traininginput, input, TRAININGSIZE * sizeof(features));
-    memcpy(testinput,&input[80], DATACOUNT * sizeof(features));
+    memcpy(testinput,&input[TRAININGSIZE], TESTINGSIZE * sizeof(features));
     // free temporary table from heap 
     free(input);
+
     // Calculating Prior Probability
     for (int i = 0; i < TRAININGSIZE; i++)
     {
@@ -461,10 +431,9 @@ void naivesBayes(int TRAININGSIZE, int DATACOUNT)
     }
     prior_normal = (float) normal_diagnosis / (float) TRAININGSIZE;
     prior_altered = (float) altered_diagnosis / (float) TRAININGSIZE;
-    printf("=====================\n");
-    printf("Prior Probability\nNormal: %f, Altered: %f \n", prior_normal, prior_altered); // Checked output and figure tallys.
-    printf("=====================\n");
-    //Initialise a 3D array, index 0 is outcome, index 1 is feature number, index 2 is feature index
+    printf("Prior Probability\nNormal: %f, Altered: %f \n", prior_normal, prior_altered); 
+
+    //Initialise a 3D array, index 0 is outcome, index 1 is feature number, index 2 is feature's index
     int probabilitySum[NUMOFOUTCOMES][FEATURESIZE][MAXINDEXSIZE];
     for (int i = 0; i < NUMOFOUTCOMES; i ++)
     {
@@ -499,46 +468,82 @@ void naivesBayes(int TRAININGSIZE, int DATACOUNT)
     calculateProbability(alcohol, 5, 6, probabilitySum);
     cond_prob smoking[3]; // Smoking Habit
     calculateProbability(smoking, 3, 7, probabilitySum);
-    // Printing of all the probabilities: 
-    printf("Overall Probability\n");
-    printf("=====================\n");
-    printf("Season 0: %f, %f, Season 1: %f, %f, Season 2: %f, %f, Season 3: %f, %f\n", season[0].normal_prob, season[0].altered_prob, season[1].normal_prob, season[1].altered_prob, season[2].normal_prob, season[2].altered_prob, season[3].normal_prob, season[3].altered_prob);
-    printf("Normal age mean: %f, variance: %f, Altered age mean: %f, variance: %f\n", age->normal_mean, age->normal_variance, age->altered_mean, age->altered_variance);    
-    printf("Disease 0: %f, %f, Disease 1: %f, %f\n", disease[0].normal_prob, disease[0].altered_prob, disease[1].normal_prob, disease[1].altered_prob);
-    printf("Accident 0: %f, %f, Accident 1: %f, %f\n", accident[0].normal_prob, accident[0].altered_prob, accident[1].normal_prob, accident[1].altered_prob);
-    printf("Surgery 0: %f, %f, Surgery 1: %f, %f\n", surgery[0].normal_prob, surgery[0].altered_prob, surgery[1].normal_prob, surgery[1].altered_prob);
-    printf("Fever 0: %f, %f, Fever 1: %f, %f, Fever 2: %f, %f\n", fever[0].normal_prob, fever[0].altered_prob, fever[1].normal_prob, fever[1].altered_prob, fever[2].normal_prob, fever[2].altered_prob);
-    printf("Alcohol 0: %f, %f, Alcohol 1: %f, %f, Alcohol 2: %f, %f, Alcohol 3: %f, %f, Alcohol 4: %f, %f\n", alcohol[0].normal_prob, alcohol[0].altered_prob, alcohol[1].normal_prob, alcohol[1].altered_prob, alcohol[2].normal_prob, alcohol[2].altered_prob, alcohol[3].normal_prob, alcohol[3].altered_prob, alcohol[4].normal_prob, alcohol[4].altered_prob);
-    printf("Smoking 0: %f, %f, Smoking 1: %f, %f, Smoking 2: %f, %f\n", smoking[0].normal_prob, smoking[0].altered_prob, smoking[1].normal_prob, smoking[1].altered_prob, smoking[2].normal_prob, smoking[2].altered_prob);
-    printf("Hours sitting normal mean: %f, variance: %f, Hours sitting altered mean: %f, variance: %f\n", sitting->normal_mean, sitting->normal_variance, sitting->altered_mean, sitting->altered_variance);
-   
-    // Posterior Probability of Training Data
+
+    //Predict the training data and store into train_prediction
     predicted_prob train_prediction[TRAININGSIZE];
-    printf("=====================\n");
-    printf("Posterior Probability for Training Data\n");
-    printf("=====================\n");
     predict(traininginput, TRAININGSIZE, train_prediction, season, age, disease, accident, surgery, fever, alcohol, smoking, sitting);
 
+    // Caclulating error for training set
     confusion_matrix train_errors[4] = {0, 0, 0, 0};
+    calculateError(train_prediction, TRAININGSIZE, train_errors);
     printf("=====================\n");
     printf("Confusion Matrix\n");
     printf("=====================\n");
-    calculateError(train_prediction, TRAININGSIZE, train_errors);
+    printf("Training Error: %f\n", train_errors->total_errors);
     //Plot confusion matrix
+    printf("Confusion Matrix for Training Size of %i\n", TRAININGSIZE);
     plotConfusion(train_errors);
 
-    //Testing Phase
-    predicted_prob test_prediction[DATACOUNT];
-    printf("=====================\n");
-    printf("Posterior Probability for Test Data\n");
-    printf("=====================\n");
-    predict(testinput, DATACOUNT, test_prediction, season, age, disease, accident, surgery, fever, alcohol, smoking, sitting);
+    //Predict the testing data and store into test_prediction
+    predicted_prob test_prediction[TESTINGSIZE];
+    predict(testinput, TESTINGSIZE, test_prediction, season, age, disease, accident, surgery, fever, alcohol, smoking, sitting);
 
+    // Calculating error for test set
     confusion_matrix test_errors[4] = {0, 0, 0, 0};
+    calculateError(test_prediction, TESTINGSIZE, test_errors);
     printf("=====================\n");
     printf("Confusion Matrix\n");
     printf("=====================\n");
-    calculateError(test_prediction, DATACOUNT, test_errors);
+    printf("Testing Error: %f\n", test_errors->total_errors);
     //Plot confusion matrix
+    printf("Confusion Matrix for Test Size of %i\n", TESTINGSIZE);
     plotConfusion(test_errors);
+
+    // Store the training and testing errors back into the error 2D array
+    *trainError = train_errors->total_errors;
+    *testError = test_errors->total_errors;
+}
+
+void run(void)
+{
+    // Store all the errors inside this float 2d array, rows for each run and column 0 for training and column 1 for testing
+    float errors[5][2];
+    // Run the 80:20 split first
+    naivesBayes(80, 20, &errors[3][0], &errors[3][1]);
+    // Repeat the runs from 50:50 to 90:10, excluding 80:20 and storing the results into the errors 2d array
+    for (int i = 50, loop = 0; i < 100; i += 10)
+    {
+        if (i != 80)
+        {
+            naivesBayes(i, 100 - i, &errors[loop][0], &errors[loop][1]);
+        }
+        loop++;
+    }
+    // Call plotGraph function to plot the probability error graph
+    plotGraph(errors);
+}
+
+void plotGraph(float errors[5][2])
+{
+    // This function plots the probability error graph: 
+
+    // Creates 2 files (training.txt and testing.txt) if it does not exist, and assign FILE pointer fp and gp to them respectively.
+    FILE *fp = fopen("training.txt", "w");
+    FILE *gp = fopen("testing.txt", "w");
+    // Creates a pipeline to pipe commands to GNUplot
+    FILE *hp = popen("gnuplot -persistent", "w");
+
+    //populate training.txt and testing.txt, where x is the size and y is the error
+    for (int i = 0, size = 50; i < 5; i ++, size += 10)
+    {
+        fprintf(fp, "%i %f\n", size, errors[i][0]);
+        fprintf(gp, "%i %f\n", 100-size, errors[i][1]);
+    }
+    // Sets the title and plot the graph
+    fprintf(hp, "set title 'Probability of Error'\n");
+    fprintf(hp, "plot 'training.txt' with lines, 'testing.txt' with lines\n");
+    // Close the file pointers
+    fclose(fp);
+    fclose(gp);
+    fclose(hp);
 }
