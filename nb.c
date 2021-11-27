@@ -397,6 +397,8 @@ void plotConfusion(confusion_matrix errors[])
 
 void naivesBayes(int TRAININGSIZE, int TESTINGSIZE, float *trainError, float *testError)
 {
+    printf("================================================================================\n");
+    printf("Naives Bayes for Training: %d and Testing: %d\n", TRAININGSIZE, TESTINGSIZE);
     // Create struct to store the training and test data
     features traininginput[TRAININGSIZE], testinput[TESTINGSIZE];
     // create a temporary table in heap
