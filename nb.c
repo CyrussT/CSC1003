@@ -5,8 +5,6 @@
 #include <time.h>
 #include "nbstructs.h"
 
-//#define TRAININGSIZE 80 /* 80% of data used for training accuracy */
-//#define DATACOUNT 20    /* 20% of data used for testing accuracy */
 #define FEATURESIZE 9
 #define MAXINDEXSIZE 5
 #define NUMOFOUTCOMES 2
@@ -16,7 +14,6 @@
 int TRAININGSIZE = 0;
 int DATACOUNT = 0;
 
-void trainTestSize(int *train, int *test);
 void scanArray(features arr[]);
 void loopArr(features arr[], int arr_size, int probabilitySum[NUMOFOUTCOMES][FEATURESIZE][MAXINDEXSIZE]);
 void calculateFeatures(features arr[], int result, int probabilitySum[NUMOFOUTCOMES][FEATURESIZE][MAXINDEXSIZE]);
@@ -50,16 +47,6 @@ int main()
     timer += (double) (end - start) / CLOCKS_PER_SEC;
     printf("Total time taken: %g seconds", timer);
     return 0;
-}
-
-void trainTestSize(int *train, int *test)
-{
-    printf("Please enter training size: \n");
-    scanf("%d", &train);
-    //while(getchar()!='\n');
-    printf("Please enter test size: \n");
-    scanf("%d", &test);
-    //while(getchar()!='\n');
 }
 
 void scanArray(features arr[])
@@ -253,9 +240,8 @@ void calculateProbability(cond_prob input[], int index_size, int indexNumber, in
     */
    for (int i = 0; i < index_size; i++)
    {
-       input[i].normal_prob = (float) probabilitySum[0][indexNumber][i] / (float) (probabilitySum[0][indexNumber][i] + probabilitySum[1][indexNumber][i]);
-       input[i].altered_prob = (float) probabilitySum[1][indexNumber][i] / (float) (probabilitySum[0][indexNumber][i] + probabilitySum[1][indexNumber][i]);
-       printf("Feature %i at Index %i: Normal Probability: %f, Altered Probability: %f\n", indexNumber, i, input[i].normal_prob, input[i].altered_prob);
+       input[i].normal_prob = (float) probabilitySum[0][indexNumber][i] / (float) normal_diagnosis;
+       input[i].altered_prob = (float) probabilitySum[1][indexNumber][i] / (float) altered_diagnosis;
    }
 }
 
@@ -539,7 +525,7 @@ void naivesBayes(int TRAININGSIZE, int DATACOUNT)
     printf("=====================\n");
     calculateError(train_prediction, TRAININGSIZE, train_errors);
     //Plot confusion matrix
-    //plotConfusion(train_errors);
+    plotConfusion(train_errors);
 
     //Testing Phase
     predicted_prob test_prediction[DATACOUNT];
@@ -554,5 +540,5 @@ void naivesBayes(int TRAININGSIZE, int DATACOUNT)
     printf("=====================\n");
     calculateError(test_prediction, DATACOUNT, test_errors);
     //Plot confusion matrix
-    //plotConfusion(test_errors);
+    plotConfusion(test_errors);
 }
