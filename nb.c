@@ -383,7 +383,7 @@ void calculateError(predicted_prob prediction[], int arr_size, confusion_matrix 
 
             break;
         }
-    }
+    }    
     errors->total_errors = (errors->false_positive + errors->false_negative) / (float) arr_size;
 }
 
@@ -476,7 +476,7 @@ void naivesBayes(int TRAININGSIZE, int TESTINGSIZE, float *trainError, float *te
     predicted_prob train_prediction[TRAININGSIZE];
     predict(traininginput, TRAININGSIZE, train_prediction, season, age, disease, accident, surgery, fever, alcohol, smoking, sitting);
 
-    // Caclulating error for training set
+    // Calculating error for training set
     confusion_matrix train_errors[] = {0, 0, 0, 0, 0.0};
     calculateError(train_prediction, TRAININGSIZE, train_errors);
     printf("=====================\n");
