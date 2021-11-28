@@ -346,7 +346,6 @@ void predict(features test[], int arr_size, predicted_prob prediction[], cond_pr
         {
             prediction[i].predicted_diagnosis = 1;
         }
-        printf("For index: %i, normal probability: %g, altered probability: %g, predicted diagnosis: %d, actual diagnosis: %d \n", i, prediction[i].normal_prob, prediction[i].altered_prob, prediction[i].predicted_diagnosis, prediction[i].actual_diagnosis);
      }
 }
 
