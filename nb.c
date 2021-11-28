@@ -24,7 +24,7 @@ void calculateFeature2(features arr[], cond_prob_range input[], int arr_size);
 void calculateFeature9(features arr[], cond_prob_range input[], int arr_size);
 void calculateProbability(cond_prob input[], int index_size, int indexNumber, int probabilitySum[NUMOFOUTCOMES][FEATURESIZE][MAXINDEXSIZE]);
 double gaussian(float x, float mean, float variance);
-void predict(features test[], int arr_size, predicted_prob prediction[], cond_prob season[], cond_prob_range age[], cond_prob disease[], cond_prob accident[], cond_prob surger[], cond_prob fever[], cond_prob alcohol[], cond_prob smoking[], cond_prob_range sitting[]);
+void predict(features test[], int arr_size, predicted_prob prediction[], cond_prob season[], cond_prob_range age[], cond_prob disease[], cond_prob accident[], cond_prob surgery[], cond_prob fever[], cond_prob alcohol[], cond_prob smoking[], cond_prob_range sitting[]);
 void calculateError(predicted_prob prediction[], int arr_size, confusion_matrix errors[]);
 void plotConfusion(confusion_matrix errors[]);
 void naivesBayes(int TRAININGSIZE, int TESTINGSIZE, float *trainError, float *testError);
@@ -544,6 +544,8 @@ void plotGraph(float errors[5][2])
     }
     // Sets the title and plot the graph
     fprintf(hp, "set title 'Probability of Error'\n");
+    fprintf(hp, "set xlabel 'Sample Size'\n");
+    fprintf(hp, "set ylabel 'Probability'\n");
     fprintf(hp, "plot 'training.txt' with lines, 'testing.txt' with lines\n");
     // Close the file pointers
     fclose(fp);
